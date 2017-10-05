@@ -3,6 +3,16 @@ import re
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
+NBSP = '\u00A0'
+RULES = {
+    'quotes': (r'''(['"])(.*?)(\1)''', r'«\2»'),
+    'm-hyphen': (r' - ', r' — '),
+    'hyphen_between_number': (r'(?<=\d)(-)(?=\d)', r'‒'),
+    'space_after_number': (r'(?<=\d)(\s)(?=[\D])', NBSP),
+    'extra_space': (r' {2,}', r' '),
+    'extra_new_line': (r'\r\n{2,}', r'\r\n'),
+    'space_with_conjunktion': (r'(?<=(?<=\s[а-яА-Я]{2})|(?<=\s[а-яА-Я]{1}))(\s)(?=.)', NBSP)
+}
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -15,14 +25,8 @@ def form():
 
 
 def typograf(text):
-    nbsp = '\u00A0'
-    text = re.sub(r'''(['"])(.*?)(\1)''', r'«\2»', text)
-    text = re.sub(r' - ', r' — ', text)
-    text = re.sub(r'(?<=\d)(-)(?=\d)', r'‒', text)
-    text = re.sub(r'(?<=\d)(\s)(?=[\D])', nbsp, text)
-    text = re.sub(r' {2,}', r' ', text)
-    text = re.sub(r'\r\n{2,}', r'\r\n', text)
-    text = re.sub(r'(?<=(?<=\s[а-яА-Я]{2})|(?<=\s[а-яА-Я]{1}))(\s)(?=.)', nbsp, text)
+    for rule in RULES.values():
+        text = re.sub(rule[0], rule[1], text)
     return text
 
 
